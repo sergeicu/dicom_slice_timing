@@ -17,6 +17,7 @@ $ cat /fileserver/abd/silatestscan3T/NRRDS/Afacan_Onur/20170111/COR_DIFF_IVIM_9B
 
 import sys 
 import os    
+import json
 
 import pydicom
 
@@ -44,6 +45,8 @@ def save_to_text(slicetiming, directory):
     # save 
     with open(fullsavename, 'w') as f:
         f.write(full_line)
+        
+    print(f"File saved to: {fullsavename}")
 
         
 if __name__ == '__main__':
@@ -55,15 +58,23 @@ if __name__ == '__main__':
     assert os.path.exists(f)
     assert os.path.exists(savedir)
     
-    # get meta 
-    meta = pydicom.dcmread(f) 
-    
-    # get slice timing 
-    tagnum=['0019','1029']
-    tag=meta["0x"+tagnum[0], "0x"+tagnum[1]]
-    slicetiming = tag.value
-    assert slicetiming
-    assert isinstance(slicetiming, list)
-    
+    # check if dicom or json 
+    if f.endswith('.json'):
+        
+        with open(f) as file:
+            data=json.load(file)
+        slicetiming=data['SliceTiming']
+
+    else: 
+        # get meta 
+        meta = pydicom.dcmread(f) 
+
+        # get slice timing 
+        tagnum=['0019','1029']
+        tag=meta["0x"+tagnum[0], "0x"+tagnum[1]]
+        slicetiming = tag.value
+        assert slicetiming
+        
     # save 
+    assert isinstance(slicetiming, list)
     save_to_text(slicetiming, savedir)
